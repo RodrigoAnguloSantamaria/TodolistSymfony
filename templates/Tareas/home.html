@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de tareas</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Lista de tareas</a>
+</nav>
+
+<!-- TODO List -->
+<div class="container mt-4">
+    <h1>Lista de tareas</h1>
+    <button id="createButton" class="btn btn-primary mb-3" data-toggle="modal" data-target="#createModal">Crear</button>
+    <ul id="taskList" class="list-group"></ul>
+</div>
+
+<!-- Task Details Modal -->
+<div id="taskModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4 id="taskName"></h4>
+                <p id="taskDescription"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div id="editModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar la Tarea</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="form-group">
+                        <label for="editTaskName">Título de la tarea</label>
+                        <input type="text" class="form-control" id="editTaskName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTaskDescription">Descripción</label>
+                        <textarea class="form-control" id="editTaskDescription" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div id="createModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Tarea</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm">
+                    <div class="form-group">
+                        <label for="createTaskName">Título de la tarea</label>
+                        <input type="text" class="form-control" id="createTaskName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="createTaskDescription">Descripción</label>
+                        <textarea class="form-control" id="createTaskDescription" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Libraries -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Get all tasks on page load
+        getTasks();
+
+        // Function to get all tasks
+        function getTasks() {
+            $.ajax({
+                url: 'http://localhost:8000/tareas',
+                type: 'GET',
+                success: function (response) {
+                    displayTasks(response.tareas);
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        // Function to display tasks
+        function displayTasks(tasks) {
+            $('#taskList').empty();
+            tasks.forEach(function (task) {
+                var taskItem = $('<li class="list-group-item d-flex justify-content-between align-items-center">' + task.nombre +
+                    '<div class="form-check form-check-inline">' +
+                    '<input class="form-check-input" type="checkbox" id="taskCheck' + task.identificador + '">' +
+                    '<label class="form-check-label" for="taskCheck' + task.identificador + '">Done</label>' +
+                    '</div>' +
+                    '<button class="btn btn-primary show-btn" data-id="' + task.identificador + '">Show</button>' +
+                    '<button class="btn btn-danger delete-btn" data-id="' + task.identificador + '">Delete</button>' +
+                    '<button class="btn btn-primary edit-btn" data-id="' + task.identificador + '">Edit</button>' +
+                    '</li>');
+
+                // Set task status
+                if (task.estado === 'hecha') {
+                    taskItem.find('input[type="checkbox"]').prop('checked', true);
+                }
+
+                // Task details
+                taskItem.find('.show-btn').click(function () {
+                    getTaskDetails(task.identificador);
+                });
+
+                // Delete task
+                taskItem.find('.delete-btn').click(function () {
+                    deleteTask(task.identificador);
+                });
+
+                // Edit task
+                taskItem.find('.edit-btn').click(function () {
+                    openEditModal(task.identificador, task.nombre, task.descripcion);
+                });
+
+                // Toggle task status
+                taskItem.find('input[type="checkbox"]').change(function () {
+                    if ($(this).is(':checked')) {
+                        markTaskAsDone(task.identificador);
+                    } else {
+                        markTaskAsUndone(task.identificador);
+                    }
+                });
+
+                $('#taskList').append(taskItem);
+            });
+        }
+
+        // Function to get task details
+        function getTaskDetails(id) {
+            $.ajax({
+                url: 'http://localhost:8000/tarea/' + id,
+                type: 'GET',
+                success: function (response) {
+                    $('#taskName').text(response.nombre);
+                    $('#taskDescription').text(response.descripcion);
+                    $('#taskModal').modal('show');
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        // Function to delete a task
+        function deleteTask(id) {
+            $.ajax({
+                url: 'http://localhost:8000/tarea/' + id,
+                type: 'DELETE',
+                success: function () {
+                    getTasks();
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        // Function to mark task as done
+        function markTaskAsDone(id) {
+            $.ajax({
+                url: 'http://localhost:8000/tarea/' + id + '/done',
+                type: 'PUT',
+                success: function () {
+                    getTasks();
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        // Function to mark task as undone
+        function markTaskAsUndone(id) {
+            $.ajax({
+                url: 'http://localhost:8000/tarea/' + id + '/undone',
+                type: 'GET',
+                success: function () {
+                    getTasks();
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        // Function to open edit modal
+        function openEditModal(id, name, description) {
+            $('#editTaskName').val(name);
+            $('#editTaskDescription').val(description);
+            $('#editModal').modal('show');
+
+            // Submit edited task
+            $('#editForm').submit(function (event) {
+                event.preventDefault();
+                var editedTask = {
+                    nombre: $('#editTaskName').val(),
+                    descripcion: $('#editTaskDescription').val()
+                };
+
+                editTask(id, editedTask);
+                $('#editModal').modal('hide');
+            });
+        }
+
+        // Function to edit a task
+        function editTask(id, task) {
+            $.ajax({
+                url: 'http://localhost:8000/tarea/' + id,
+                type: 'PUT',
+                data: JSON.stringify(task),
+                contentType: 'application/json',
+                success: function () {
+                    getTasks();
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        // Open create modal
+        $('#createModal').on('show.bs.modal', function () {
+            $('#createTaskName').val('');
+            $('#createTaskDescription').val('');
+        });
+
+        // Submit create task form
+        $('#createForm').submit(function (event) {
+            event.preventDefault();
+            var newTask = {
+                nombre: $('#createTaskName').val(),
+                descripcion: $('#createTaskDescription').val()
+            };
+
+            createTask(newTask);
+            $('#createModal').modal('hide');
+        });
+
+        // Function to create a task
+        function createTask(task) {
+            $.ajax({
+                url: 'http://localhost:8000/tarea',
+                type: 'POST',
+                data: JSON.stringify(task),
+                contentType: 'application/json',
+                success: function () {
+                    getTasks();
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+    });
+</script>
+</body>
+
+</html>
+

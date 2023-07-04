@@ -1,0 +1,44 @@
+[
+    {
+        "nombre": "Tarea primera",
+        "descripcion": "descripcion primeras",
+        "estado": "hecha",
+        "identificador": 1
+    },
+    {
+        "nombre": "Tarea segunda",
+        "descripcion": "descripcion segunda",
+        "estado": "sin hacer",
+        "identificador": 2
+    },
+    {
+        "nombre": "Tarea tercera",
+        "descripcion": "descripcion tercera",
+        "estado": "hecha",
+        "identificador": 3
+    },
+    {
+        "nombre": "Tarea cuarta",
+        "descripcion": "cuarta tarea editada",
+        "estado": "hecha",
+        "identificador": 4
+    },
+    {
+        "nombre": "Tarea quinta",
+        "descripcion": "quinta tarea editada",
+        "estado": "sin hacer",
+        "identificador": 5
+    },
+    {
+        "nombre": "Tarea sexta",
+        "descripcion": "sexta tarea",
+        "estado": "hecha",
+        "identificador": 6
+    },
+    {
+        "nombre": "Tarea 7",
+        "descripcion": "septima",
+        "estado": "sin hacer",
+        "identificador": 7
+    }
+]
